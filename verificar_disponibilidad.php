@@ -35,12 +35,12 @@ if (isset($_POST['verificar'])) {
     
     // Actualizar estado y proceso de la reserva
     $estado = $disponible ? 'confirmada' : 'cancelada';
-    $sql = "UPDATE reservas SET estado = '$estado', proceso = 'P4', fecha_fin = NOW() 
+    $sql = "UPDATE reservas SET estado = '$estado', proceso = 'P3', fecha_fin = NOW() 
             WHERE id_reserva = $id_reserva";
     mysqli_query($con, $sql);
     
     // Redirigir al siguiente proceso
-    header("Location: proceso.php?id_reserva=$id_reserva&flujo={$reserva['flujo']}&proceso=$siguiente");
+    header("Location: proceso.php?id_reserva=$id_reserva&flujo={$reserva['flujo']}&proceso=P3");
     exit();
 }
 
