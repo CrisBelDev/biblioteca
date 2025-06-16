@@ -62,7 +62,8 @@ mysqli_close($con);
 			<div class="space-y-2">
 				<p><span class="font-semibold">Libro:</span> <?php echo htmlspecialchars($reserva['titulo']); ?></p>
 				<p><span class="font-semibold">Autor:</span> <?php echo htmlspecialchars($reserva['autor']); ?></p>
-				<p><span class="font-semibold">Usuario:</span> <?php echo htmlspecialchars($reserva['usuario']); ?></p>
+				<p><span class="font-semibold">Usuario:</span> <?php echo htmlspecialchars($reserva['id_usuario']); ?>
+				</p>
 				<p><span class="font-semibold">Estado:</span>
 					<span
 						class="<?php echo $reserva['estado'] == 'completada' ? 'text-green-600' : 'text-blue-600'; ?>">
