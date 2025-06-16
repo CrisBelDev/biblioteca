@@ -43,9 +43,18 @@ function obtenerAnteriorProceso($procesos_flujo, $proceso) {
 $procesoAnterior = obtenerAnteriorProceso($procesos_flujo, $proceso);
 $procesoSiguiente = obtenerSiguienteProceso($con, $flujo, $proceso);
 
-// Procesar retroceso de proceso
+// Procesar retroceso de proceso SOLO si es bibliotecario y no pasa P2
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['retroceder_proceso'])) {
+    if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'bibliotecario') {
+        die("No tienes permiso para retroceder el proceso.");
+    }
+
     $proceso_anterior = mysqli_real_escape_string($con, $_POST['proceso_anterior']);
+
+    if (intval(substr($proceso_anterior, 1)) < 2) {
+        die("No se puede retroceder más allá del proceso P2.");
+    }
+
     $sql = "UPDATE reservas SET proceso='$proceso_anterior' 
             WHERE id_reserva=$id_reserva AND flujo='$flujo'";
     if (mysqli_query($con, $sql)) {
@@ -93,6 +102,7 @@ if (!$reserva) {
 
 mysqli_close($con);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">

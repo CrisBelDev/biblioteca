@@ -8,8 +8,9 @@ if (!$con) {
 session_start();
 
 // Consulta reservas
-$sql = "SELECT r.id_reserva, r.usuario, r.flujo, r.proceso, l.titulo, r.fecha_inicio, r.fecha_fin, r.estado 
-        FROM reservas r
+$sql = "SELECT r.id_reserva, u.nombre as unombre, r.flujo, r.proceso, l.titulo, r.fecha_inicio, r.fecha_fin, r.estado 
+        FROM reservas r 
+		LEFT JOIN usuarios u ON r.id_usuario = u.id
         LEFT JOIN libros l ON r.id_libro = l.id_libro
         ORDER BY r.estado, r.fecha_inicio DESC";
 
@@ -34,9 +35,9 @@ $resultado = mysqli_query($con, $sql);
 
 
 				<?php if (!empty($_SESSION['rol'])): ?>
-				Bienvenido, <?php echo htmlspecialchars($_SESSION['rol']); ?>
+			<p>Bienvenido, <?php echo $_SESSION['nombre']; ?> (<?php echo $_SESSION['rol']; ?>)</p>
+			<?php endif; ?>
 
-				<?php endif; ?>
 			</p>
 
 			<p class="text-gray-600">Estado de todas las reservas</p>
@@ -76,7 +77,7 @@ $resultado = mysqli_query($con, $sql);
                             
                             echo "<tr class='hover:bg-gray-50'>";
                             echo "<td class='px-6 py-4 whitespace-nowrap'>" . htmlspecialchars($fila['id_reserva']) . "</td>";
-                            echo "<td class='px-6 py-4 whitespace-nowrap'>" . htmlspecialchars($fila['usuario']) . "</td>";
+                            echo "<td class='px-6 py-4 whitespace-nowrap'>" . htmlspecialchars($fila['unombre']) . "</td>";
                             echo "<td class='px-6 py-4'>" . htmlspecialchars($fila['titulo'] ?? 'N/A') . "</td>";
                             
                             // Columna de progreso

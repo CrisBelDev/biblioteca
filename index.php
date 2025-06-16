@@ -1,191 +1,86 @@
 <?php
-// Conexión a la base de datos
-$con = mysqli_connect("localhost", "root", "", "biblioteca");
-if (!$con) {
-    die("Error en la conexión: " . mysqli_connect_error());
+session_start();
+if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'bibliotecario') {
+    header("Location: login.php");
+    exit();
 }
-
-$mensaje = '';
-$reserva_exitosa = false;
-
-// Procesar formulario de registro de flujo y proceso
-if (isset($_POST['registrar_proceso'])) {
-    $flujo = mysqli_real_escape_string($con, $_POST['flujo']);
-    $proceso = mysqli_real_escape_string($con, $_POST['proceso']);
-    $siguiente = mysqli_real_escape_string($con, $_POST['siguiente']);
-    $pantalla = mysqli_real_escape_string($con, $_POST['pantalla']);
-    $rol = mysqli_real_escape_string($con, $_POST['rol']);
-
-    if ($flujo && $proceso && $pantalla && $rol) {
-        $sql = "INSERT INTO flujo_proceso (flujo, proceso, siguiente, pantalla, rol)
-                VALUES ('$flujo', '$proceso', '$siguiente', '$pantalla', '$rol')";
-        if (mysqli_query($con, $sql)) {
-            $mensaje = "Proceso registrado correctamente.";
-        } else {
-            $mensaje = "Error al registrar proceso: " . mysqli_error($con);
-        }
-    } else {
-        $mensaje = "Por favor, completa todos los campos obligatorios.";
-    }
-}
-
-// Procesar formulario de nueva reserva
-if (isset($_POST['nueva_reserva'])) {
-    $usuario = mysqli_real_escape_string($con, $_POST['usuario']);
-    $id_libro = (int)$_POST['id_libro'];
-
-    // Obtener primer proceso del flujo F1
-    $sql = "SELECT proceso FROM flujo_proceso WHERE flujo='F1' ORDER BY proceso ASC LIMIT 1";
-    $result = mysqli_query($con, $sql);
-    $proceso = mysqli_fetch_assoc($result)['proceso'];
-
-    $sql = "INSERT INTO reservas (usuario, flujo, proceso, id_libro, fecha_inicio, estado)
-            VALUES ('$usuario', 'F1', 'P3', $id_libro, NOW(), 'pendiente')";
-
-    if (mysqli_query($con, $sql)) {
-        $id_reserva = mysqli_insert_id($con);
-        $mensaje = "Reserva iniciada correctamente. ID: $id_reserva";
-        $reserva_exitosa = true;
-    } else {
-        $mensaje = "Error al crear reserva: " . mysqli_error($con);
-    }
-}
-
-mysqli_close($con);
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Sistema de Reservas - Biblioteca</title>
+	<meta charset="UTF-8">
+	<title>Dashboard Administrador</title>
 	<script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-100">
 
-	<?php if ($reserva_exitosa): ?>
-	<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-		<div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md mx-auto animate-pulse">
-			<h2 class="text-3xl font-extrabold text-indigo-700 mb-4">¡Solicitud en proceso!</h2>
-			<p class="text-gray-800 text-lg mb-3">Espere al agente de biblioteca para recibir su libro.</p>
-			<p class="text-sm text-gray-500">Será redirigido automáticamente en 5 segundos...</p>
-		</div>
-	</div>
-	<script>
-	setTimeout(() => {
-		window.location.href = "index.php";
-	}, 5000);
-	</script>
-	<?php endif; ?>
+	<div class="flex h-screen">
 
-	<div class="container mx-auto px-4 py-8">
-		<header class="mb-8">
-			<h1 class="text-3xl font-bold text-indigo-700">Sistema de Reservas de Libros</h1>
-			<p class="text-gray-600">Biblioteca Municipal</p>
-		</header>
+		<!-- Sidebar -->
+		<aside class="w-64 bg-indigo-800 text-white flex flex-col p-4">
+			<h2 class="text-2xl font-bold mb-6 text-center">Admin Panel</h2>
+			<nav class="flex-1 space-y-4">
+				<a href="dashboard_admin.php"
+					class="block px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700">Inicio</a>
+				<a href="flujo3/bandeja_admin.php" class="block px-4 py-2 hover:bg-indigo-700 rounded">Bandeja
+					adquisiciones</a>
+				<a href="bandeja.php" class="block px-4 py-2 hover:bg-indigo-700 rounded">Bandeja reservas</a>
+				<a href="gestionar_libros.php" class="block px-4 py-2 hover:bg-indigo-700 rounded">Gestionar libros</a>
+			</nav>
+			<form action="logout.php" method="POST" class="mt-auto">
+				<button type="submit" class="w-full mt-4 bg-red-600 hover:bg-red-700 py-2 rounded">Cerrar
+					sesión</button>
+			</form>
+		</aside>
 
-		<?php if ($mensaje): ?>
-		<a href="confirmar_reserva.php?id_reserva=<?php echo isset($id_reserva) ? $id_reserva : ''; ?>"
-			class="inline-block mb-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
-			Confirmar Reserva
-		</a>
-		<div
-			class="mb-6 p-4 rounded-md <?php echo strpos($mensaje, 'Error') === false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-			<?php echo htmlspecialchars($mensaje); ?>
-		</div>
-		<?php endif; ?>
+		<!-- Main Content -->
+		<main class="flex-1 p-6 overflow-y-auto">
+			<h1 class="text-3xl font-bold text-gray-800 mb-6">Bienvenido, Bibliotecario</h1>
 
-		<div class="grid md:grid-cols-2 gap-8">
-			<!-- Formulario para nueva reserva -->
-			<div class="bg-white p-6 rounded-lg shadow-md">
-				<h2 class="text-xl font-semibold mb-4 text-indigo-600 border-b pb-2">Nueva Reserva</h2>
-				<form method="post" action="">
-					<div class="mb-4">
-						<label for="usuario" class="block text-gray-700 mb-2">Usuario</label>
-						<input type="text" id="usuario" name="usuario" required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+				<!-- Card 1 -->
+				<a href="flujo3/bandeja_admin.php" class="bg-white rounded-lg shadow p-5 hover:shadow-lg transition">
+					<div class="flex items-center space-x-4">
+						<i class="ph ph-books text-indigo-600 text-4xl"></i>
+						<div>
+							<h2 class="text-lg font-bold text-gray-800">Adquisiciones</h2>
+							<p class="text-sm text-gray-600">Gestiona solicitudes de nuevos libros.</p>
+						</div>
 					</div>
+				</a>
 
-					<div class="mb-4">
-						<label for="id_libro" class="block text-gray-700 mb-2">Libro</label>
-						<select id="id_libro" name="id_libro" required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-							<option value="">Seleccione un libro</option>
-							<?php
-                            $con = mysqli_connect("localhost", "root", "", "biblioteca");
-                            $sql = "SELECT * FROM libros";
-                            $result = mysqli_query($con, $sql);
-                            while ($libro = mysqli_fetch_assoc($result)) {
-                                echo "<option value='{$libro['id_libro']}'>{$libro['titulo']} - {$libro['autor']}</option>";
-                            }
-                            mysqli_close($con);
-                            ?>
-						</select>
+				<!-- Card 2 -->
+				<a href="bandeja.php" class="bg-white rounded-lg shadow p-5 hover:shadow-lg transition">
+					<div class="flex items-center space-x-4">
+						<i class="ph ph-calendar-check text-green-600 text-4xl"></i>
+						<div>
+							<h2 class="text-lg font-bold text-gray-800">Reservas</h2>
+							<p class="text-sm text-gray-600">Consulta y aprueba reservas de libros.</p>
+						</div>
 					</div>
+				</a>
 
-					<button type="submit" name="nueva_reserva"
-						class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
-						Iniciar Reserva
-					</button>
-				</form>
+				<!-- Card 3 -->
+				<a href="gestionar_libros.php" class="bg-white rounded-lg shadow p-5 hover:shadow-lg transition">
+					<div class="flex items-center space-x-4">
+						<i class="ph ph-book-open-text text-yellow-500 text-4xl"></i>
+						<div>
+							<h2 class="text-lg font-bold text-gray-800">Libros</h2>
+							<p class="text-sm text-gray-600">Agregar, editar o eliminar libros del catálogo.</p>
+						</div>
+					</div>
+				</a>
+
+				<!-- Puedes agregar más cartillas aquí -->
 			</div>
-
-			<!-- Formulario para registrar procesos (admin) -->
-			<div class="bg-white p-6 rounded-lg shadow-md">
-				<h2 class="text-xl font-semibold mb-4 text-indigo-600 border-b pb-2">Registrar Proceso (Admin)</h2>
-				<form method="post" action="">
-					<div class="mb-4">
-						<label for="flujo" class="block text-gray-700 mb-2">Flujo (ej. F1)</label>
-						<input type="text" id="flujo" name="flujo" maxlength="3" required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-					</div>
-
-					<div class="mb-4">
-						<label for="proceso" class="block text-gray-700 mb-2">Proceso (ej. P1)</label>
-						<input type="text" id="proceso" name="proceso" maxlength="3" required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-					</div>
-
-					<div class="mb-4">
-						<label for="siguiente" class="block text-gray-700 mb-2">Siguiente Proceso</label>
-						<input type="text" id="siguiente" name="siguiente" maxlength="3"
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-					</div>
-
-					<div class="mb-4">
-						<label for="pantalla" class="block text-gray-700 mb-2">Pantalla</label>
-						<input type="text" id="pantalla" name="pantalla" maxlength="30" required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-					</div>
-
-					<div class="mb-4">
-						<label for="rol" class="block text-gray-700 mb-2">Rol</label>
-						<select id="rol" name="rol" required
-							class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-							<option value="">Seleccione un rol</option>
-							<option value="usuario">Usuario</option>
-							<option value="bibliotecario">Bibliotecario</option>
-						</select>
-					</div>
-
-					<button type="submit" name="registrar_proceso"
-						class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
-						Registrar Proceso
-					</button>
-				</form>
-			</div>
-		</div>
-
-		<div class="mt-8">
-			<a href="bandeja.php"
-				class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors">
-				Ver todas las reservas
-			</a>
-		</div>
+		</main>
 	</div>
+
 </body>
 
 </html>
